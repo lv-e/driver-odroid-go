@@ -1,3 +1,7 @@
+
+// + LVNDR game engine +
+// there's magic in these files <3
+
 #pragma once 
 
 #ifndef lvk_scene_count
@@ -17,6 +21,9 @@
 #endif
 
 #ifndef lvk_measuring
-#define lvk_measuring true
-#define lvk_measuring_fps true 
+#define lvk_measuring 1
+#endif
+
+#ifndef lvk_gamepads
+#define lvk_gamepads 1
 #endif

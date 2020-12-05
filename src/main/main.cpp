@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/timers.h"
+#include "freertos/portmacro.h"
 
 #include "esp_system.h"
 #include "esp_int_wdt.h"
@@ -15,6 +16,8 @@
 
 #include "lv-driver/display.h"
 #include "lv-game/lvk.h"
+#include "lv-game/shared.h"
+#include "lv-game/bootstrap.h"
 #include "lv-game/scene_main.h"
 #include "lv-engine/engine.h"
 
@@ -46,8 +49,9 @@ void gameLoop(void * pvParameters){
             measuredFPS = (unsigned short) abs( 1.0 / ((diff)/ 1000.0));
             printf("FPS:%d MEM:%d\n", (int) measuredFPS, esp_get_free_heap_size());
         #endif
-
-        vTaskSuspend(NULL); 
+        
+        //wait next frame
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     }
 
@@ -65,7 +69,7 @@ extern "C" void app_main(void){
     gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
     gpio_set_level(GPIO_NUM_2, 1);
 
-    scene_main_setup();
+    setupScenes();
     lvDirector.runScene(SCENE_MAIN);
 
     const esp_timer_create_args_t gameloop_timer_args = {
@@ -79,11 +83,15 @@ extern "C" void app_main(void){
 
     xTaskCreatePinnedToCore(
         gameLoop, "gameLoop",
-        lvk_display_w * lvk_display_h/2, NULL, 25,
+        1024 * 3, NULL, 25,
         &gameloopTask, 1
     );
 }
 
+BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
 static void gameloop_timer_callback(void* arg){
-    xTaskResumeFromISR(gameloopTask);
+    xHigherPriorityTaskWoken = pdFALSE;
+    vTaskNotifyGiveFromISR( gameloopTask, &xHigherPriorityTaskWoken );
+    portYIELD_FROM_ISR();
 }

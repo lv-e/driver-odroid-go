@@ -42,5 +42,6 @@
         ".vscode": true,
         "src/build": true,
         "project.properties": true
-    }
+    },
+    "cmake.configureOnOpen": false
 }

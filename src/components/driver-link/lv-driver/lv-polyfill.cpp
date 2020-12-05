@@ -4,6 +4,20 @@
 #include "lv-engine/engine.h"
 #include "lv-driver/display.h"
 
+#include "esp_system.h"
+#include "driver/gpio.h"
+#include "driver/adc.h"
+#include "rom/ets_sys.h"
+
+#define ODROID_GAMEPAD_IO_X ADC1_CHANNEL_6
+#define ODROID_GAMEPAD_IO_Y ADC1_CHANNEL_7
+#define ODROID_GAMEPAD_IO_SELECT GPIO_NUM_27
+#define ODROID_GAMEPAD_IO_START GPIO_NUM_39
+#define ODROID_GAMEPAD_IO_A GPIO_NUM_32
+#define ODROID_GAMEPAD_IO_B GPIO_NUM_33
+#define ODROID_GAMEPAD_IO_MENU GPIO_NUM_13
+#define ODROID_GAMEPAD_IO_VOLUME GPIO_NUM_0
+
 static lv::half palette[32] = {
 
 	0b0000000000000000,
@@ -42,7 +56,7 @@ static lv::half palette[32] = {
 
 extern "C" {
 
-    void lvDriver_DrawHLine(lv::half line, lv::octet (&stream)[lvk_display_w]){
+    void lvDriver_DrawHLine(const lv::half line, const lv::octet (&stream)[lvk_display_w]){
 
     	register lv::word pixelCursor = 0;
 
@@ -60,4 +74,57 @@ extern "C" {
         return measuredFPS;
     }
 
+	lv::GamePad lvDriver_GamePadState(lv::half player) {
+
+		lv::GamePad p = {0};
+
+		// directional keys will be using a voltage divider + analog port
+
+		int x_series = 0;
+		int y_series = 0;
+		int series_size = 3;
+
+		for(int i = 0; i < series_size; i++) {
+			x_series += adc1_get_raw(ODROID_GAMEPAD_IO_X);
+			y_series += adc1_get_raw(ODROID_GAMEPAD_IO_Y);
+			ets_delay_us(6);
+		}
+
+		int xLevel 	= x_series/series_size;
+    	int yLevel 	= y_series/series_size;
+
+    	if (xLevel > 4000){
+        	p.left 	= 0;
+        	p.rigth = 0;
+		} else if (xLevel > 2000){
+        	p.left 	= 0;
+        	p.rigth = 1;
+    	} else {
+        	p.left 	= 1;
+        	p.rigth = 0;
+		}
+
+		if (yLevel > 4000){
+        	p.up 	= 0;
+        	p.down 	= 0;
+		} else if (yLevel > 2000){
+        	p.up 	= 0;
+        	p.down 	= 1;
+    	} else {
+        	p.up 	= 1;
+        	p.down 	= 0;
+		}
+
+		// all the others are digital ports
+
+		p.select 	= !(gpio_get_level(ODROID_GAMEPAD_IO_SELECT));
+    	p.start 	= !(gpio_get_level(ODROID_GAMEPAD_IO_START));
+
+		p.a 		= !gpio_get_level(ODROID_GAMEPAD_IO_A);
+		p.b 		= !gpio_get_level(ODROID_GAMEPAD_IO_B);
+		p.x 		= 0; // dont have
+		p.y 		= 0; // dont have
+
+		return p;
+	}
 }

@@ -34,7 +34,7 @@ const int LCD_SPI_CLOCK_RATE = SPI_MASTER_FREQ_80M;
 #define MADCTL_MH 0x04
 #define TFT_RGB_BGR 0x08
 
-static spi_transaction_t trans[8];
+static spi_transaction_t* trans;
 static spi_device_handle_t spi;
 static TaskHandle_t xTaskToNotify = NULL;
 
@@ -165,7 +165,7 @@ static void ili_init(){
     hLinePixels = (unsigned short*) heap_caps_malloc(linesSize, MALLOC_CAP_DMA | MALLOC_CAP_8BIT);
 }
 
-static void send_reset_drawing(int left, int top, int width, int height){
+void ili9341_send_reset_drawing(int left, int top, int width, int height){
 
     trans[0].tx_data[0] = 0x2A; //Column Address Set
     trans[1].tx_data[0] = (left) >> 8; //Start Col High
@@ -187,7 +187,7 @@ static void send_reset_drawing(int left, int top, int width, int height){
 }
 
 void ili9341_begin_drawing() {
-    send_reset_drawing(0, 0, lvk_display_w, lvk_display_h);
+    ili9341_send_reset_drawing(0, 0, lvk_display_w, lvk_display_h);
 }
 
 void ili9341_end_drawing(){
@@ -260,13 +260,17 @@ void ili9341_backlight_deinit(){
 }
 
 void ili9341_clear(uint16_t color){ 
-    send_reset_drawing(0, 0, 320, 240);
+    ili9341_send_reset_drawing(0, 0, 320, 240);
     for (int i = 0; i < 320; ++i) *(hLinePixels + i ) = color;
     for (int y = 0; y < 240; ++y) ili9341_send_continue_line((uint16_t*) hLinePixels, 320, 1);
 }
 
 void ili9341_init(){ 
     
+    trans = (spi_transaction_t*) heap_caps_malloc(
+        8 * sizeof(spi_transaction_t), MALLOC_CAP_DMA | MALLOC_CAP_8BIT
+    );
+
     // Initialize transactions
     for (int x = 0; x < 8; x++) {
         
@@ -323,6 +327,9 @@ void ili9341_init(){
 
 	printf("[Odroid LCD :: lvndr driver] calling backlight_init\n");
     backlight_init();
+
+    printf("[Odroid LCD :: lvndr driver] configuring draw region\n");
+    ili9341_send_reset_drawing(0, 0, lvk_display_w, lvk_display_h);
 
     printf("[Odroid LCD :: lvndr driver] Initialized (%d Hz).\n", LCD_SPI_CLOCK_RATE);
 
