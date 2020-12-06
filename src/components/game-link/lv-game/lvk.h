@@ -9,11 +9,11 @@
 #endif
 
 #ifndef lvk_display_h
-#define lvk_display_h 240
+#define lvk_display_h 120
 #endif
 
 #ifndef lvk_display_w
-#define lvk_display_w 320
+#define lvk_display_w 160
 #endif
 
 #ifndef lvk_60hz

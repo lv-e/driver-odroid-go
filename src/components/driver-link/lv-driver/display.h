@@ -10,7 +10,9 @@
 
 #include "stdint.h"
 
+#define kDisplayScale 2
 #define kBufferingLines 60
+#define kDisplayPyshicalWidth 320
 
 extern unsigned short* hLinePixels;
 extern unsigned short measuredFPS;

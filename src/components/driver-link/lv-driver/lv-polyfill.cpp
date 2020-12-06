@@ -59,13 +59,20 @@ extern "C" {
     void lvDriver_DrawHLine(const lv::half line, const lv::octet (&stream)[lvk_display_w]){
 
     	register lv::word pixelCursor = 0;
-
+		
     	do {
-        	*(hLinePixels + (line%kBufferingLines * lvk_display_w) + pixelCursor) = palette[stream[pixelCursor]];
+			#if kDisplayScale == 1
+			 	*(hLinePixels + (line%kBufferingLines * lvk_display_w) + pixelCursor) = palette[stream[pixelCursor]];
+			#elif kDisplayScale == 2
+				*(hLinePixels + (((line * 2)+0)%kBufferingLines * kDisplayPyshicalWidth) + (pixelCursor*2 + 0)) = palette[stream[pixelCursor]];
+				*(hLinePixels + (((line * 2)+0)%kBufferingLines * kDisplayPyshicalWidth) + (pixelCursor*2 + 1)) = palette[stream[pixelCursor]];
+				*(hLinePixels + (((line * 2)+1)%kBufferingLines * kDisplayPyshicalWidth) + (pixelCursor*2 + 0)) = palette[stream[pixelCursor]];
+				*(hLinePixels + (((line * 2)+1)%kBufferingLines * kDisplayPyshicalWidth) + (pixelCursor*2 + 1)) = palette[stream[pixelCursor]];
+			#endif
     	} while (pixelCursor++ < lvk_display_w);
 
-		if(line%kBufferingLines == kBufferingLines - 1) {
-			ili9341_send_continue_line((uint16_t*) hLinePixels, 320, kBufferingLines);
+		if(line%(kBufferingLines/kDisplayScale) == (kBufferingLines/kDisplayScale) - 1) {
+			ili9341_send_continue_line((uint16_t*) hLinePixels, kDisplayPyshicalWidth, kBufferingLines);
 		}
 
     }

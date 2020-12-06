@@ -161,7 +161,7 @@ static void ili_init(){
 
     }
     
-    const size_t linesSize = (lvk_display_w * kBufferingLines * 2);
+    const size_t linesSize = (lvk_display_w * kBufferingLines * kDisplayScale* 2);
     hLinePixels = (unsigned short*) heap_caps_malloc(linesSize, MALLOC_CAP_DMA | MALLOC_CAP_8BIT);
 }
 
@@ -187,7 +187,7 @@ void ili9341_send_reset_drawing(int left, int top, int width, int height){
 }
 
 void ili9341_begin_drawing() {
-    ili9341_send_reset_drawing(0, 0, lvk_display_w, lvk_display_h);
+    ili9341_send_reset_drawing(0, 0, lvk_display_w * kDisplayScale, lvk_display_h * kDisplayScale);
 }
 
 void ili9341_end_drawing(){
