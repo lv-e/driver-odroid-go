@@ -1,0 +1,5 @@
+
+idf_component_register(
+    SRC_DIRS "." "../source/lv-driver/" "../source/lv-game/" "../source/lv-engine/ui" "../source/lv-engine/io"
+    INCLUDE_DIRS "../source/"
+)
